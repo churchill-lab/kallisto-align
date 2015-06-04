@@ -160,7 +160,16 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
         }
     }
 
-    // for each file
+    int version = 1;                                                                                                                                                               
+    bool ec_write = version_ec;
+
+    if (ec_write) {
+        std::cout << PROGNAME << " Creating (" << version << ") Equivalance Class File..." << std::endl;
+    } else {
+        version = 0;
+        std::cout << PROGNAME << " Creating (" << version << ") Read File..." << std::endl;
+    }
+
     std::cout << PROGNAME << " Pseudo-Aligning..." << std::endl;
 
     // [readidx] = readid
@@ -181,8 +190,6 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     std::map<int, std::map<int, std::vector<int>>> ec_bits;
 
     int ec_index = 0;
-
-    bool ec_write = version_ec;
 
     int haps_size = haps.size();
     int num_alignment_rows = 0;
@@ -341,14 +348,6 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     }
 
     int tmp_size = 0;
-    int version = 1;
-
-    if (ec_write) {
-        std::cout << PROGNAME << " Creating Equivalance Class File..." << std::endl << std::endl;
-    } else {
-        std::cout << PROGNAME << " Creating Read File..." << std::endl << std::endl;
-        version = 0;
-    }
 
     // 1. version
     out.write((char *) &version, sizeof(version));
