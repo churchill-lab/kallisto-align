@@ -21,22 +21,17 @@
 #include "kseq.h"
 #include "KmerIndex.h"
 #include "MinCollector.h"
-#include "common.h"
-#include "Kmer.hpp"
 
 #include "cxxopts.hpp"
 
 #include <zlib.h>
-#include <string>
-#include <vector>
-#include <map>
 #include <set>
-#include <iostream>
 
 
 #ifndef KSEQ_INIT_READY
 #define KSEQ_INIT_READY
 KSEQ_INIT(gzFile, gzread)
+
 #endif
 
 #define PROGNAME "[kallisto-export]"
@@ -52,7 +47,7 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 
 int simple_to_one(const std::vector<int> b) {
     int c = 0;
-    for (int i=0; i < b.size(); ++i)
+    for (int i = 0; i < b.size(); ++i)
         if (b[i] != 0)
             c |= 1 << i;
     return c;
@@ -60,8 +55,8 @@ int simple_to_one(const std::vector<int> b) {
 
 std::vector<int> simple_from_one(int c, int size) {
     std::vector<int> ret;
-    for (int i=0; i < size; ++i)
-        ret.push_back((c & (1<<i)) != 0);
+    for (int i = 0; i < size; ++i)
+        ret.push_back((c & (1 << i)) != 0);
     return ret;
 }
 
@@ -71,13 +66,9 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 
-struct vec_ints {
-    std::vector<int> bits;
-};
-typedef std::map<int, vec_ints> map_ints;
-
 template<typename Index, typename TranscriptCollector>
-void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollector& tc, bool version_ec, std::string emase_binary_file) {
+void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollector &tc, bool version_ec,
+                      std::string emase_binary_file) {
 
     // need to receive an index map
     std::ios_base::sync_with_stdio(false);
@@ -92,38 +83,61 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
     size_t numreads = 0;
     size_t nummapped = 0;
 
-    // create the lookup for targets
-    // simple_id, haplotype, target_idx
-    std::map <std::string, std::map<std::string, int>> lookup_targets;
+    // maintarget_idx, haplotype_idx, target_idx
+    std::unordered_map<int, std::map<int, int>> map_mainidx_to_all_targets;
 
-    std::set <std::string> set_haps;
-    std::set <std::string> set_targets;
-    std::map <std::string, int> main_targets_rev;
-    std::vector <std::string> main_targets;
-    std::vector <std::string> haps;
+    // target_idx, maintarget_idx
+    std::unordered_map<int, int> map_targetidx_to_mainidx;
+
+    // maintargetname, maintarget_idx
+    std::unordered_map<std::string, int> map_targetname_to_main;
+
+    std::vector<std::string> main_targets;
+    std::set<std::string> set_targets;
+
+    std::set<std::string> set_haps;
+    std::vector<std::string> haps;
+    std::unordered_map<std::string, int> map_haps;
+
 
     int idx = 0;
+    int main_idx = 0;
     for (auto name : index.target_names_) {
-        std::vector <std::string> elems = split(name, delim);
+        std::vector<std::string> elems = split(name, delim);
 
-        if (set_haps.count(elems[1]) <= 0) {
-            set_haps.insert(elems[1]);
-            haps.push_back(elems[1]);
-        }
-
-        if (set_targets.count(elems[0]) <= 0) {
-            set_targets.insert(elems[0]);
+        if (set_targets.insert(elems[0]).second) {
             main_targets.push_back(elems[0]);
-            main_targets_rev[elems[0]] = main_targets.size() - 1;
+            map_targetname_to_main[elems[0]] = main_targets.size() - 1;
         }
 
-        lookup_targets[elems[0]][elems[1]] = idx++;
+        if (set_haps.insert(elems[1]).second) {
+            haps.push_back(elems[1]);
+            map_haps[elems[1]] = haps.size() - 1;
+        }
+
+        main_idx = map_targetname_to_main[elems[0]];
+        map_targetidx_to_mainidx[idx] = main_idx;
+        map_mainidx_to_all_targets[main_idx][map_haps[elems[1]]] = idx;
+
+        idx++;
     }
 
+    /*
+
+    for (auto s : main_targets) {
+        int i = map_targetname_to_main[s];
+        std::cout << "TARGET NAME:" << s << ", has main index " << i << std::endl;
+        std::map<int, int> c = map_mainidx_to_all_targets[i];
+
+        for (int a = 0; a < haps.size(); a++) {
+            std::cout << a << ", "<< haps[a] << ", " << c[a] << std::endl;
+        }
+    }
+     */
 
     gzFile fp1 = 0, fp2 = 0;
     kseq_t *seq1 = 0, *seq2 = 0;
-    std::vector <std::pair<int, int>> v1, v2;
+    std::vector<std::pair<int, int>> v1, v2;
     v1.reserve(1000);
     v2.reserve(1000);
 
@@ -147,26 +161,37 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
     }
 
     // for each file
-    std::cout << PROGNAME << " Aligning..." << std::endl;
+    std::cout << PROGNAME << " Pseudo-Aligning..." << std::endl;
 
-    // [readidx] = <readid, sequence>
-    std::vector <std::pair<std::string, std::string>> reads1;
-    std::vector <std::pair<std::string, std::string>> reads2;
+    // [readidx] = readid
+    std::vector<std::string> read1_ids;
+    std::vector<std::string> read2_ids;
 
     // vector of hash of ints
-    std::map<int, map_ints> reads1_bits;
-    std::map<int, map_ints> reads2_bits;
-    std::set <std::string> _reads1;
-    std::set <std::string> _reads2;
+    std::vector<std::map<int, std::vector<int>>> read1_map_bits;
+    std::vector<std::map<int, std::vector<int>>> read2_map_bits;
+
+    // read indices
     int read1_idx = 0;
     int read2_idx = 0;
+
+    std::vector<int> ec_ids;
+    // ec_class to index
+    std::map<int, int> ec_map;
+    std::map<int, std::map<int, std::vector<int>>> ec_bits;
+
+    int ec_index = 0;
+
+    bool ec_write = version_ec;
+
+    int haps_size = haps.size();
     int num_alignment_rows = 0;
 
-    std::map<int, map_ints> ec_bits;
-    std::set<int> _ecs;
-    int ec_index = 0;
-    std::vector <int> ec_ids;
-    bool ec_write = version_ec;
+    std::vector<int> pos;
+    pos.reserve(haps_size);
+
+    std::vector<std::string> elems;
+    elems.reserve(2);
 
     for (int i = 0; i < opt.files.size(); i += (paired) ? 2 : 1) {
 
@@ -193,6 +218,7 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
             numreads++;
             v1.clear();
             v2.clear();
+
             // process read
             index.match(seq1->seq.s, seq1->seq.l, v1);
             if (paired) {
@@ -205,80 +231,73 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
                 nummapped++;
 
                 if (ec_write) {
-                    if (_ecs.count(ec) <= 0) {
-                        _ecs.insert(ec);
-                        ec_index++;
+                    if (ec_map.count(ec) <= 0) {
+                        ec_map[ec] = ec_index;
                         ec_ids.push_back(ec);
+                        ec_index++;
                     }
                 } else {
-                    if (_reads1.count(seq1->name.s) <= 0) {
-                        //std::cout << "R_E_A_D adding : " << read1_idx << " : " << seq1->name.s << std::endl;
-                        _reads1.insert(seq1->name.s);
-                        reads1.push_back({seq1->name.s, seq1->seq.s});
-                        read1_idx++;
-                    }
+                    read1_ids.push_back(seq1->name.s);
+                    read1_idx++;
 
                     if (paired) {
-                        if (_reads2.count(seq2->name.s) <= 0) {
-                            _reads2.insert(seq2->name.s);
-                            reads2.push_back({seq2->name.s, seq2->seq.s});
-                            read2_idx++;
-                        }
+                        read2_ids.push_back(seq2->name.s);
+                        read2_idx++;
                     }
                 }
 
-                // vector elements are index into target names
-                const std::vector <int> &vec = index.ecmap[ec];
+                // vector elements are index into targets
+                const std::vector<int> &vec = index.ecmap[ec];
 
-                //std::vector< std::map<int, std::vector<int>> target_idxs;
-                set_targets.clear();
+                //for (auto v : vec) {
+                //    std::cout << "v=" << v << ", " << index.target_names_[v] << std::endl;
+                //}
 
-                // get the main transcript id so we can see if all haplotypes match
+                //set_targets.clear();
+                std::set<int> int_targets;
+                elems.clear();
 
-                map_ints _mapper;
-
-                for (int a : vec) {
-                    std::vector <std::string> elems = split(index.target_names_[a], delim);
-                    if (set_targets.count(elems[0]) <= 0) {
-                        set_targets.insert(elems[0]);
-
-                        std::vector <int> pos;
-
-                        for (auto h : haps) {
-                            int target_index = lookup_targets[elems[0]][h];
-                            pos.push_back(target_index);
-                        }
-                        _mapper[main_targets_rev[elems[0]]].bits = pos;
-                    }
-
-                }
-                num_alignment_rows += set_targets.size();
-
-                map_ints _yn;
-                if (reads1_bits.count(read1_idx-1) > 0) {
-                    _yn = reads1_bits[read1_idx-1];
-                }
-                for (auto iterator = _mapper.begin(); iterator != _mapper.end(); iterator++) {
-                    std::vector <int> pos;
-
-                    for (auto a : iterator->second.bits) {
-                        bool found = false;
-
-                        for (int b : vec) {
-                            if (a == b) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        pos.push_back(found ? 1 : 0);
-                    }
-                    _yn[iterator->first].bits = pos;
-                }
+                // maintarget_idx => bits
+                std::map<int, std::vector<int>> _mapper;
 
                 if (ec_write) {
-                    ec_bits[ec_index - 1] = _yn;
+                    if (ec_bits.count(ec) > 0) {
+                        _mapper = ec_bits[ec_index - 1];
+                    }
+                }
+
+
+                for (int a : vec) {
+                    // get the main target
+                    int maintarget_idx = map_targetidx_to_mainidx[a];
+
+                    //std::cout << "MAIN TARGET=" << maintarget_idx << ", " << main_targets[maintarget_idx] << std::endl;
+
+                    auto &loc = map_mainidx_to_all_targets[maintarget_idx];
+
+                    if (_mapper.count(maintarget_idx) <= 0) {
+                        // maintarget_idx not in mapper
+                        for (int h = 0; h < haps_size; h++) {
+                            _mapper[maintarget_idx].push_back(0);
+                        }
+                    }
+
+                    // loop through the haplotypes
+                    for (int h = 0; h < haps_size; h++) {
+                        //std::cout << "COMPARING " << a << " to " << loc[h] << std::endl;
+                        if (a == loc[h]) {
+                            _mapper[maintarget_idx][h] = 1;
+                            break;
+                        }
+                    }
+                }
+
+                num_alignment_rows += _mapper.size();
+
+                if (ec_write) {
+                    ec_bits[ec_index - 1] = _mapper;
                 } else {
-                    reads1_bits[read1_idx - 1] = _yn;
+                    read1_map_bits.push_back(_mapper);
                 }
             }
 
@@ -294,7 +313,6 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
                     }
                 }
             }
-
         }
         gzclose(fp1);
         if (paired) {
@@ -307,9 +325,9 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
         kseq_destroy(seq2);
     }
 
-    std::cout << PROGNAME << "     Haplotypes: " << haps.size() << std::endl;
     std::cout << PROGNAME << "  Total Targets: " << idx << std::endl;
     std::cout << PROGNAME << "   Main Targets: " << main_targets.size() << std::endl;
+    std::cout << PROGNAME << "     Haplotypes: " << haps.size() << std::endl;
     std::cout << PROGNAME << "          Reads: " << numreads << std::endl;
     std::cout << PROGNAME << "   Mapped Reads: " << nummapped << std::endl;
     std::cout << PROGNAME << "     Alignments: " << num_alignment_rows << std::endl;
@@ -323,139 +341,153 @@ void createAlignments(Index& index, const ProgramOptions& opt, TranscriptCollect
     }
 
     int tmp_size = 0;
+    int version = 1;
 
     if (ec_write) {
         std::cout << PROGNAME << " Creating Equivalance Class File..." << std::endl << std::endl;
+    } else {
+        std::cout << PROGNAME << " Creating Read File..." << std::endl << std::endl;
+        version = 0;
+    }
 
-        // 1. write version
-        int version = 1;
-        out.write((char *) &version, sizeof(version));
+    // 1. version
+    out.write((char *) &version, sizeof(version));
 
+    // 2. write number of targets
+    //std::cout << std::endl << "TARGETS" << std::endl;
+    int main_targets_size = main_targets.size();
+    out.write((char *) &main_targets_size, sizeof(main_targets_size));
 
+    // 3. write targets
+    for (int i = 0; i < main_targets.size(); i++) {
+        auto t = main_targets[i];
+        tmp_size = strlen(t.c_str());
+        out.write((char *) &tmp_size, sizeof(tmp_size));
+        out.write(t.c_str(), tmp_size);
+
+        //std::cout << i << ": " << t.c_str() << std::endl;
+    }
+
+    // 4. write haplotypes
+    //std::cout << std::endl << "HAPLOTYPES" << std::endl;
+    int haplotypes_size = haps.size();
+    out.write((char *) &haplotypes_size, sizeof(haplotypes_size));
+
+    for (int i = 0; i < haps.size(); i++) {
+        auto t = haps[i];
+        tmp_size = strlen(t.c_str());
+        out.write((char *) &tmp_size, sizeof(tmp_size));
+        out.write(t.c_str(), tmp_size);
+
+        //std::cout << i << ": " << t.c_str() << std::endl;
+    }
+
+    if (ec_write) {
         // 1. write number of ecids ids
+        //std::cout << std::endl << "EC IDS" << std::endl;
         int ec_ids_size = ec_ids.size();
         out.write((char *) &ec_ids_size, sizeof(ec_ids_size));
 
         for (int id = 0; id < ec_ids.size(); id++) {
             int count = tc.counts[ec_ids[id]];
             out.write((char *) &count, sizeof(count));
-        }
 
-        // 2. write number of targets
-        int main_targets_size = main_targets.size();
-        out.write((char *) &main_targets_size, sizeof(main_targets_size));
-
-        // 3. write targets
-        for (int i = 0; i < main_targets.size(); i++) {
-            auto t = main_targets[i];
-            tmp_size = strlen(t.c_str());
-            out.write((char *) &tmp_size, sizeof(tmp_size));
-            out.write(t.c_str(), tmp_size);
-        }
-
-        // 4. write haplotypes
-        int haplotypes_size = haps.size();
-        out.write((char *) &haplotypes_size, sizeof(haplotypes_size));
-
-        for (int i = 0; i < haps.size(); i++) {
-            auto t = haps[i];
-            tmp_size = strlen(t.c_str());
-            out.write((char *) &tmp_size, sizeof(tmp_size));
-            out.write(t.c_str(), tmp_size);
+            //std::cout << "id=" << id << ", ec = " << ec_ids[id] << ", count = " << count << std::endl;
         }
 
         // 5. write the ecid, target bits
         int _num_mappings = 0;
-        for (auto i = ec_bits.begin(); i != ec_bits.end(); i++) {
-            for (auto iterator = i->second.begin(); iterator != i->second.end(); iterator++) {
+        for (int i = 0; i < ec_bits.size(); i++) {
+            auto _ecs = ec_bits[i];
+            for (auto iterator = _ecs.begin(); iterator != _ecs.end(); iterator++) {
                 _num_mappings++;
             }
         }
         out.write((char *) &_num_mappings, sizeof(_num_mappings));
 
+        std::cout << _num_mappings << std::endl;
+
         for (auto i = ec_bits.begin(); i != ec_bits.end(); i++) {
             for (auto iterator = i->second.begin(); iterator != i->second.end(); iterator++) {
                 int idx_ecs = i->first;
                 int idx_target = iterator->first;
-                int bits = simple_to_one(iterator->second.bits);
+                int bits = simple_to_one(iterator->second);
 
                 out.write((char *) &idx_ecs, sizeof(idx_ecs));
                 out.write((char *) &idx_target, sizeof(idx_target));
                 out.write((char *) &bits, sizeof(bits));
+
+                /*
+                std::cout << "[" << idx_ecs << "] " << ec_ids[idx_ecs];
+                std::cout << "\t"<< tc.counts[ec_ids[idx_ecs]];
+                std::cout << "\t[" << idx_target << "] " << main_targets[idx_target];
+                std::cout << "\t[" << bits << "] ";
+
+                for (auto b : iterator->second) {
+                    std::cout << b;
+                }
+
+                std::cout << std::endl;
+                */
             }
         }
-
     } else {
-        std::cout << PROGNAME << " Creating Read File..." << std::endl << std::endl;
-
-        // 1. write version
-        int version = 0;
-        out.write((char *) &version, sizeof(version));
-
         // 2. write number of read ids
-        int reads1_size = reads1.size();
+        int reads1_size = read1_ids.size();
         out.write((char *) &reads1_size, sizeof(reads1_size));
 
+        //std::cout << "reads1_size=" << reads1_size << std::endl;
+
         // 3. write read ids
-        for (int i = 0; i < reads1.size(); i++) {
-            auto r = reads1[i];
-            tmp_size = strlen(r.first.c_str());
+        for (int i = 0; i < read1_ids.size(); i++) {
+            auto r = read1_ids[i];
+            tmp_size = strlen(r.c_str());
             out.write((char *) &tmp_size, sizeof(tmp_size));
-
-            out.write(r.first.c_str(), tmp_size);
-        }
-
-        // 4. write number of targets
-        int main_targets_size = main_targets.size();
-        out.write((char *) &main_targets_size, sizeof(main_targets_size));
-
-        // 5. write targets
-        for (int i = 0; i < main_targets.size(); i++) {
-            auto t = main_targets[i];
-            tmp_size = strlen(t.c_str());
-            out.write((char *) &tmp_size, sizeof(tmp_size));
-            out.write(t.c_str(), tmp_size);
-        }
-
-        // 6. write haplotypes
-        int haplotypes_size = haps.size();
-        out.write((char *) &haplotypes_size, sizeof(haplotypes_size));
-
-        for (int i = 0; i < haps.size(); i++) {
-            auto t = haps[i];
-            tmp_size = strlen(t.c_str());
-            out.write((char *) &tmp_size, sizeof(tmp_size));
-            out.write(t.c_str(), tmp_size);
+            out.write(r.c_str(), tmp_size);
         }
 
         // 7. write read info
         out.write((char *) &num_alignment_rows, sizeof(num_alignment_rows));
 
-        for (auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
-            for (auto iterator = i->second.begin(); iterator != i->second.end(); iterator++) {
-                int idx_read = i->first;
+        for (int i = 0; i < read1_map_bits.size(); i++) {
+            auto rb = read1_map_bits[i];
+            for (auto iterator = rb.begin(); iterator != rb.end(); iterator++) {
+                int idx_read = i;
                 int idx_target = iterator->first;
-                int bits = simple_to_one(iterator->second.bits);
+                int bits = simple_to_one(iterator->second);
 
                 out.write((char *) &idx_read, sizeof(idx_read));
                 out.write((char *) &idx_target, sizeof(idx_target));
                 out.write((char *) &bits, sizeof(bits));
+
+                /*
+                std::cout << "[" << idx_read << "] " << read1_ids[idx_read];
+                std::cout << "\t[" << idx_target << "] " << main_targets[idx_target];
+                std::cout << "\t[" << bits << "] ";
+
+                for (auto b : iterator->second) {
+                    std::cout << b;
+                }
+
+                std::cout << std::endl;
+                */
             }
         }
     }
 
     out.flush();
     out.close();
-
 }
 
-void loadAlignments(const std::string& emase_binary_file) {
+/**
+ * Useful for looking at the stored binary data.
+ */
+void loadAlignments(const std::string &emase_binary_file) {
     std::ifstream in;
 
     in.open(emase_binary_file, std::ios::in | std::ios::binary);
 
     if (!in.is_open()) {
-        // TODO: better handling
         std::cerr << PROGNAME << " Error: index input file could not be opened!";
         exit(1);
     }
@@ -464,15 +496,16 @@ void loadAlignments(const std::string& emase_binary_file) {
     std::vector<int> ec_classes_counts;
     std::vector<std::string> haplotypes;
     std::vector<std::string> main_targets;
-    std::map<int, map_ints > reads1_bits;
+    std::map<int, std::map<int, std::vector<int>>> reads1_bits;
 
     int tmp_size;
     int bufsz = 1024;
     char *buffer = new char[bufsz];
     bool ec_read = true;
 
+    // get the version
     int binary_type;
-    in.read((char *)&binary_type, sizeof(binary_type));
+    in.read((char *) &binary_type, sizeof(binary_type));
 
     if (binary_type == 1) {
         ec_read = true;
@@ -485,84 +518,63 @@ void loadAlignments(const std::string& emase_binary_file) {
         exit(1);
     }
 
+    // 3. read the number of main_targets
+    int main_target_size;
+    in.read((char *) &main_target_size, sizeof(main_target_size));
+
+    std::cout << PROGNAME << " Number of Main Targets: " << main_target_size << std::endl;
+
+    // 4. read in the main targets
+    memset(buffer, 0, bufsz);
+    for (auto i = 0; i < main_target_size; ++i) {
+        in.read((char *) &tmp_size, sizeof(tmp_size));
+        if (tmp_size + 1 > bufsz) {
+            delete[] buffer;
+            bufsz = 2 * (tmp_size + 1);
+            buffer = new char[bufsz];
+        }
+        memset(buffer, 0, bufsz);
+        in.read(buffer, tmp_size);
+        main_targets.push_back(std::string(buffer));
+    }
+
+    // 5. read in the number of haplotypes
+    int hap_size;
+    in.read((char *) &hap_size, sizeof(hap_size));
+
+    std::cout << PROGNAME << " Number of Haplotypes: " << hap_size << std::endl;
+
+    // 6. read in the haplotypes
+    memset(buffer, 0, bufsz);
+    for (auto i = 0; i < hap_size; ++i) {
+        in.read((char *) &tmp_size, sizeof(tmp_size));
+        if (tmp_size + 1 > bufsz) {
+            delete[] buffer;
+            bufsz = 2 * (tmp_size + 1);
+            buffer = new char[bufsz];
+        }
+        memset(buffer, 0, bufsz);
+        in.read(buffer, tmp_size);
+        haplotypes.push_back(std::string(buffer));
+    }
+
+
     if (ec_read) {
         // 1. read the number of ec classes and counts
         int ec_classes_size;
-        in.read((char *)&ec_classes_size, sizeof(ec_classes_size));
+        in.read((char *) &ec_classes_size, sizeof(ec_classes_size));
 
-        // 2. read in the reads
+        // 2. read in the counts
         for (auto i = 0; i < ec_classes_size; ++i) {
             int idx_count;
             in.read((char *) &idx_count, sizeof(idx_count));
             ec_classes_counts.push_back(idx_count);
         }
         std::cout << PROGNAME << " Number of EC Classes: " << ec_classes_size << std::endl;
-    } else {
-        // 1. read the number of reads
-        int reads1_size;
-        in.read((char *)&reads1_size, sizeof(reads1_size));
 
-        // 2. read in the reads
-        for (auto i = 0; i < reads1_size; ++i) {
-            in.read((char *)&tmp_size, sizeof(tmp_size));
-            if (tmp_size +1 > bufsz) {
-                delete[] buffer;
-                bufsz = 2*(tmp_size+1);
-                buffer = new char[bufsz];
-            }
-            memset(buffer,0,bufsz);
-            in.read(buffer, tmp_size);
-            reads1.push_back(std::string( buffer ));
-        }
-        std::cout << PROGNAME << " Number of reads: " << reads1_size << std::endl;
-    }
-
-
-    // 3. read the number of main_targets
-    int main_target_size;
-    in.read((char *)&main_target_size, sizeof(main_target_size));
-
-    std::cout << PROGNAME << " Number of Main Targets: " << main_target_size << std::endl;
-
-    // 4. read in the main targets
-    memset(buffer,0,bufsz);
-    // 2. read in the reads
-    for (auto i = 0; i < main_target_size; ++i) {
-        in.read((char *)&tmp_size, sizeof(tmp_size));
-        if (tmp_size +1 > bufsz) {
-            delete[] buffer;
-            bufsz = 2*(tmp_size+1);
-            buffer = new char[bufsz];
-        }
-        memset(buffer,0,bufsz);
-        in.read(buffer, tmp_size);
-        main_targets.push_back(std::string( buffer ));
-    }
-
-    // haplotypes
-    int hap_size;
-    in.read((char *)&hap_size, sizeof(hap_size));
-
-    std::cout << PROGNAME << " Number of Haplotypes: " << hap_size << std::endl;
-
-    memset(buffer,0,bufsz);
-    for (auto i = 0; i < hap_size; ++i) {
-        in.read((char *)&tmp_size, sizeof(tmp_size));
-        if (tmp_size +1 > bufsz) {
-            delete[] buffer;
-            bufsz = 2*(tmp_size+1);
-            buffer = new char[bufsz];
-        }
-        memset(buffer,0,bufsz);
-        in.read(buffer, tmp_size);
-        haplotypes.push_back(std::string( buffer ));
-    }
-
-    if (ec_read) {
-
-        // 5. read the ec class info
+        // 7. read the ec class info
         int num_alignments;
-        in.read((char *)&num_alignments, sizeof(num_alignments));
+        in.read((char *) &num_alignments, sizeof(num_alignments));
 
         std::cout << PROGNAME << " Number of Alignment Records: " << num_alignments << std::endl;
 
@@ -578,17 +590,17 @@ void loadAlignments(const std::string& emase_binary_file) {
             in.read((char *) &bits, sizeof(bits));
             std::vector<int> all_bits = simple_from_one(bits, hap_size);
 
-            map_ints _yn;
+            std::map<int, std::vector<int>> _yn;
             if (reads1_bits.count(idx_ec) > 0) {
                 _yn = reads1_bits[idx_ec];
             }
 
-            _yn[idx_target].bits = all_bits;
+            _yn[idx_target] = all_bits;
             reads1_bits[idx_ec] = _yn;
         }
 
-        for(auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
-            for(auto j = i->second.begin(); j != i->second.end(); j++) {
+        for (auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
+            for (auto j = i->second.begin(); j != i->second.end(); j++) {
                 int idx_read = i->first;
                 int idx_target = j->first;
 
@@ -596,22 +608,40 @@ void loadAlignments(const std::string& emase_binary_file) {
                 std::cout << ec_classes_counts[idx_read] << "\t";
                 std::cout << main_targets[idx_target] << "\t";
 
-                for (auto &a : j->second.bits) {
+                for (auto &a : j->second) {
                     std::cout << a;
                 }
 
                 std::cout << std::endl;
             }
         }
+
     } else {
-        // 5. read the read_info
+        // 1. read the number of reads
+        int reads1_size;
+        in.read((char *) &reads1_size, sizeof(reads1_size));
+
+        // 2. read in the reads
+        for (auto i = 0; i < reads1_size; ++i) {
+            in.read((char *) &tmp_size, sizeof(tmp_size));
+            if (tmp_size + 1 > bufsz) {
+                delete[] buffer;
+                bufsz = 2 * (tmp_size + 1);
+                buffer = new char[bufsz];
+            }
+            memset(buffer, 0, bufsz);
+            in.read(buffer, tmp_size);
+            reads1.push_back(std::string(buffer));
+        }
+        std::cout << PROGNAME << " Number of reads: " << reads1_size << std::endl;
+
+        // 7. read the read_info
         int num_alignments;
-        in.read((char *)&num_alignments, sizeof(num_alignments));
+        in.read((char *) &num_alignments, sizeof(num_alignments));
 
         std::cout << PROGNAME << " Number of Alignment Records: " << num_alignments << std::endl;
 
         for (auto ri = 0; ri < num_alignments; ++ri) {
-
             int idx_read;
             in.read((char *) &idx_read, sizeof(idx_read));
 
@@ -622,24 +652,24 @@ void loadAlignments(const std::string& emase_binary_file) {
             in.read((char *) &bits, sizeof(bits));
             std::vector<int> all_bits = simple_from_one(bits, hap_size);
 
-            map_ints _yn;
+            std::map<int, std::vector<int>> _yn;
             if (reads1_bits.count(idx_read) > 0) {
                 _yn = reads1_bits[idx_read];
             }
 
-            _yn[idx_target].bits = all_bits;
+            _yn[idx_target] = all_bits;
             reads1_bits[idx_read] = _yn;
         }
 
-        for(auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
-            for(auto j = i->second.begin(); j != i->second.end(); j++) {
+        for (auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
+            for (auto j = i->second.begin(); j != i->second.end(); j++) {
                 int idx_read = i->first;
                 int idx_target = j->first;
 
                 std::cout << reads1[idx_read] << "\t";
                 std::cout << main_targets[idx_target] << "\t";
 
-                for (auto &a : j->second.bits) {
+                for (auto &a : j->second) {
                     std::cout << a;
                 }
 
@@ -648,10 +678,8 @@ void loadAlignments(const std::string& emase_binary_file) {
         }
     }
 
-    // delete the buffer
     delete[] buffer;
-    buffer=nullptr;
-
+    buffer = nullptr;
     in.close();
 }
 
@@ -663,17 +691,19 @@ void loadAlignments(const std::string& emase_binary_file) {
  * V2 = EQUIVALENCE CLASSES (DEFAULT)
  *
  */
-int main(int argc, char* argv[]) {
-    try  {
-        cxxopts::Options options(argv[0], " - export kallisto to new binary format");
+int main(int argc, char *argv[]) {
+    try {
 
         bool load = false;
         bool version_read = false;
 
+        // simple argument parsing, nothing special
+        cxxopts::Options options(argv[0], " - export kallisto to new binary format");
         options.add_options()
                 ("help", "Print help")
                 ("l,load", "view the binary file", cxxopts::value<bool>(load))
-                ("reads", "create Reads version binary format, else Equivalence Class", cxxopts::value<bool>(version_read))
+                ("reads", "create Reads version binary format, else Equivalence Class",
+                 cxxopts::value<bool>(version_read))
                 ("f,file", "Input Fastq File", cxxopts::value<std::vector<std::string>>(), "FASTQ FILE")
                 ("i,index", "Input Index File", cxxopts::value<std::vector<std::string>>(), "INDEX FILE")
                 ("b,bin", "Emase Binary File", cxxopts::value<std::string>());
@@ -685,6 +715,7 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
 
+        // the binary file we are creating or reading
         std::string binaryfile;
 
         if (options.count("b")) {
@@ -700,6 +731,8 @@ int main(int argc, char* argv[]) {
             loadAlignments(binaryfile);
 
         } else {
+
+            // if not loading, assume creating
 
             ProgramOptions opt;
             if (options.count("f")) {
@@ -721,15 +754,21 @@ int main(int argc, char* argv[]) {
             opt.single_end = true;
 
             std::cout << PROGNAME << " Creating " << binaryfile << "..." << std::endl;
+
+            // load the index
+
             KmerIndex index(opt);
             index.load(opt);
+
+            // create the alignments
+
             MinCollector collection(index, opt);
             createAlignments(index, opt, collection, !version_read, binaryfile);
         }
 
         std::cout << PROGNAME << " Done" << std::endl << std::endl;
 
-    } catch (const cxxopts::OptionException& e) {
+    } catch (const cxxopts::OptionException &e) {
         std::cerr << PROGNAME << " error parsing options: " << e.what() << std::endl;
         exit(1);
     }
