@@ -2,10 +2,6 @@ kallisto-export
 ===================
 kallisto-export is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#binaryformat) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
 
-Table of contents
-
-[TOC]
-
 
 Building
 -------------
@@ -69,6 +65,7 @@ haplotype name|string|repeated \#haplotypes times
 >Depending upon the version, one of two formats is appended.
 
 **version = 0**
+
 name             | type|note
 -----------------|-------------------|---------------------
 \#reads        |integer |
@@ -80,6 +77,7 @@ target index|integer|repeated \#pseudo-alignments times
 bitwise flag|integer|repeated \#pseudo-alignments times
 
 **version = 1**
+
 name             | type|note
 -----------------|-------------------|---------------------
 \#equivalence classes        |integer |
