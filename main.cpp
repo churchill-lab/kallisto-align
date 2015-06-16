@@ -21,22 +21,29 @@
 #include "kseq.h"
 #include "KmerIndex.h"
 #include "MinCollector.h"
+#include "common.h"
+#include "kseq.h"
 
 #include "cxxopts.hpp"
 
 #include <zlib.h>
 #include <set>
+#include <unordered_map>
 
 
 #ifndef KSEQ_INIT_READY
 #define KSEQ_INIT_READY
 KSEQ_INIT(gzFile, gzread)
-
 #endif
 
 #define PROGNAME "[kallisto-export]"
 
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+//
+// split a string by specified delimiter
+//
+std::vector<std::string> &split(const std::string &s,
+                                char delim,
+                                std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
@@ -45,6 +52,19 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
     return elems;
 }
 
+//
+// split a string by specified delimiter
+//
+std::vector<std::string> split(const std::string &s,
+                               char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+//
+// convert a vector to an integer
+//
 int simple_to_one(const std::vector<int> b) {
     int c = 0;
     for (int i = 0; i < b.size(); ++i)
@@ -53,6 +73,9 @@ int simple_to_one(const std::vector<int> b) {
     return c;
 }
 
+//
+// convert an integer into a vector
+//
 std::vector<int> simple_from_one(int c, int size) {
     std::vector<int> ret;
     for (int i = 0; i < size; ++i)
@@ -60,17 +83,17 @@ std::vector<int> simple_from_one(int c, int size) {
     return ret;
 }
 
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
 
+//
+// Pseudo-align
+//
 template<typename Index, typename TranscriptCollector>
-void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollector &tc, bool version_ec,
+void createAlignments(Index &index,
+                      const ProgramOptions &opt,
+                      TranscriptCollector &tc,
+                      bool version_ec,
                       std::string emase_binary_file) {
 
-    // need to receive an index map
     std::ios_base::sync_with_stdio(false);
 
     char delim = '_';
@@ -83,13 +106,13 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     size_t numreads = 0;
     size_t nummapped = 0;
 
-    // maintarget_idx, haplotype_idx, target_idx
+    // <maintarget_idx, <haplotype_idx, target_idx>>
     std::unordered_map<int, std::map<int, int>> map_mainidx_to_all_targets;
 
-    // target_idx, maintarget_idx
+    // <target_idx, maintarget_idx>
     std::unordered_map<int, int> map_targetidx_to_mainidx;
 
-    // maintargetname, maintarget_idx
+    // <maintargetname, maintarget_idx>
     std::unordered_map<std::string, int> map_targetname_to_main;
 
     std::vector<std::string> main_targets;
@@ -97,8 +120,9 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
     std::set<std::string> set_haps;
     std::vector<std::string> haps;
-    std::unordered_map<std::string, int> map_haps;
 
+    // <haplotypename, haplotype_idx>
+    std::unordered_map<std::string, int> map_haps;
 
     int idx = 0;
     int main_idx = 0;
@@ -126,7 +150,7 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
     for (auto s : main_targets) {
         int i = map_targetname_to_main[s];
-        std::cout << "TARGET NAME:" << s << ", has main index " << i << std::endl;
+        std::cout << "TARGET NAME:" << s << ", main index " << i << std::endl;
         std::map<int, int> c = map_mainidx_to_all_targets[i];
 
         for (int a = 0; a < haps.size(); a++) {
@@ -153,10 +177,12 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
     for (int i = 0; i < opt.files.size(); i += (paired) ? 2 : 1) {
         if (paired) {
-            std::cout << PROGNAME << " Processing pair " << (i / 2 + 1) << ": " << opt.files[i] << std::endl
-            << "                        " << opt.files[i + 1] << std::endl;
+            std::cout << PROGNAME << " Processing pair " << (i / 2 + 1) << ": "
+                      << opt.files[i] << std::endl << "                        "
+                      << opt.files[i + 1] << std::endl;
         } else {
-            std::cout << PROGNAME << " Processing " << i + 1 << ": " << opt.files[i] << std::endl;
+            std::cout << PROGNAME << " Processing " << i + 1 << ": "
+                      << opt.files[i] << std::endl;
         }
     }
 
@@ -164,10 +190,12 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     bool ec_write = version_ec;
 
     if (ec_write) {
-        std::cout << PROGNAME << " Creating (" << version << ") Equivalance Class File..." << std::endl;
+        std::cout << PROGNAME << " Creating (" << version
+                  << ") Equivalance Class File..." << std::endl;
     } else {
         version = 0;
-        std::cout << PROGNAME << " Creating (" << version << ") Read File..." << std::endl;
+        std::cout << PROGNAME << " Creating (" << version
+                  << ") Read File..." << std::endl;
     }
 
     std::cout << PROGNAME << " Pseudo-Aligning..." << std::endl;
@@ -176,7 +204,7 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     std::vector<std::string> read1_ids;
     std::vector<std::string> read2_ids;
 
-    // vector of hash of ints
+    // vector of hash of ints, [readidx] = <maintarget_idx, bits>
     std::vector<std::map<int, std::vector<int>>> read1_map_bits;
     std::vector<std::map<int, std::vector<int>>> read2_map_bits;
 
@@ -184,9 +212,13 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
     int read1_idx = 0;
     int read2_idx = 0;
 
+    // [ec_index] = ec_class
     std::vector<int> ec_ids;
-    // ec_class to index
+
+    // <ec_class, ec_index>
     std::map<int, int> ec_map;
+
+    // [ec_index] = <maintarget_idx, bits>
     std::map<int, std::map<int, std::vector<int>>> ec_bits;
 
     int ec_index = 0;
@@ -228,6 +260,7 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
             // process read
             index.match(seq1->seq.s, seq1->seq.l, v1);
+            // v1 now contains an array of pairs, {ec, kmerpos in string}
             if (paired) {
                 index.match(seq2->seq.s, seq2->seq.l, v2);
             }
@@ -239,9 +272,11 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
                 if (ec_write) {
                     if (ec_map.count(ec) <= 0) {
+                        ec_index = ec_ids.size();
                         ec_map[ec] = ec_index;
                         ec_ids.push_back(ec);
-                        ec_index++;
+                    } else {
+                        ec_index = ec_map[ec];
                     }
                 } else {
                     read1_ids.push_back(seq1->name.s);
@@ -257,7 +292,8 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
                 const std::vector<int> &vec = index.ecmap[ec];
 
                 //for (auto v : vec) {
-                //    std::cout << "v=" << v << ", " << index.target_names_[v] << std::endl;
+                //    std::cout << "v=" << v << ", "
+                //              << index.target_names_[v] << std::endl;
                 //}
 
                 //set_targets.clear();
@@ -269,16 +305,16 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
                 if (ec_write) {
                     if (ec_bits.count(ec) > 0) {
-                        _mapper = ec_bits[ec_index - 1];
+                        _mapper = ec_bits[ec_index];
                     }
                 }
-
 
                 for (int a : vec) {
                     // get the main target
                     int maintarget_idx = map_targetidx_to_mainidx[a];
 
-                    //std::cout << "MAIN TARGET=" << maintarget_idx << ", " << main_targets[maintarget_idx] << std::endl;
+                    //std::cout << "MAIN TARGET=" << maintarget_idx << ", "
+                    //          << main_targets[maintarget_idx] << std::endl;
 
                     auto &loc = map_mainidx_to_all_targets[maintarget_idx];
 
@@ -291,7 +327,9 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
                     // loop through the haplotypes
                     for (int h = 0; h < haps_size; h++) {
-                        //std::cout << "COMPARING " << a << " to " << loc[h] << std::endl;
+                        //std::cout << "COMPARING " << a << " to " << loc[h]
+                        //          << std::endl;
+
                         if (a == loc[h]) {
                             _mapper[maintarget_idx][h] = 1;
                             break;
@@ -302,18 +340,20 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
                 num_alignment_rows += _mapper.size();
 
                 if (ec_write) {
-                    ec_bits[ec_index - 1] = _mapper;
+                    ec_bits[ec_index] = _mapper;
                 } else {
                     read1_map_bits.push_back(_mapper);
                 }
             }
 
             if (paired && 0 <= ec && ec < index.num_trans && tlencount > 0) {
-                bool allSame = (v1[0].first == ec && v2[0].first == ec) && (v1[0].second == 0 && v2[0].second == 0);
+                bool allSame = (v1[0].first == ec && v2[0].first == ec) &&
+                        (v1[0].second == 0 && v2[0].second == 0);
 
                 if (allSame) {
                     // try to map the reads
-                    int tl = index.mapPair(seq1->seq.s, seq1->seq.l, seq2->seq.s, seq2->seq.l, ec);
+                    int tl = index.mapPair(seq1->seq.s, seq1->seq.l,
+                                           seq2->seq.s, seq2->seq.l, ec);
                     if (0 < tl && tl < tc.flens.size()) {
                         tc.flens[tl]++;
                         tlencount--;
@@ -332,18 +372,29 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
         kseq_destroy(seq2);
     }
 
-    std::cout << PROGNAME << "  Total Targets: " << idx << std::endl;
-    std::cout << PROGNAME << "   Main Targets: " << main_targets.size() << std::endl;
-    std::cout << PROGNAME << "     Haplotypes: " << haps.size() << std::endl;
-    std::cout << PROGNAME << "          Reads: " << numreads << std::endl;
-    std::cout << PROGNAME << "   Mapped Reads: " << nummapped << std::endl;
-    std::cout << PROGNAME << "     Alignments: " << num_alignment_rows << std::endl;
+    std::cout << PROGNAME << "  Total Targets: "
+              << idx << std::endl;
+
+    std::cout << PROGNAME << "   Main Targets: "
+              << main_targets.size() << std::endl;
+
+    std::cout << PROGNAME << "     Haplotypes: "
+              << haps.size() << std::endl;
+
+    std::cout << PROGNAME << "          Reads: "
+              << numreads << std::endl;
+
+    std::cout << PROGNAME << "   Mapped Reads: "
+              << nummapped << std::endl;
+
+    std::cout << PROGNAME << "     Alignments: "
+              << num_alignment_rows << std::endl;
 
     std::ofstream out;
     out.open(emase_binary_file, std::ios::out | std::ios::binary);
 
     if (!out.is_open()) {
-        std::cerr << PROGNAME << " Error: align output file could not be opened!";
+        std::cerr << PROGNAME << " Error: output file could not be opened!";
         exit(1);
     }
 
@@ -391,26 +442,27 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
             int count = tc.counts[ec_ids[id]];
             out.write((char *) &count, sizeof(count));
 
-            //std::cout << "id=" << id << ", ec = " << ec_ids[id] << ", count = " << count << std::endl;
+            //std::cout << "id=" << id << ", ec = " << ec_ids[id]
+            //          << ", count = " << count << std::endl;
         }
 
         // 5. write the ecid, target bits
         int _num_mappings = 0;
         for (int i = 0; i < ec_bits.size(); i++) {
             auto _ecs = ec_bits[i];
-            for (auto iterator = _ecs.begin(); iterator != _ecs.end(); iterator++) {
+            for (auto iter = _ecs.begin(); iter != _ecs.end(); iter++) {
                 _num_mappings++;
             }
         }
         out.write((char *) &_num_mappings, sizeof(_num_mappings));
 
-        std::cout << _num_mappings << std::endl;
+        //std::cout << _num_mappings << std::endl;
 
         for (auto i = ec_bits.begin(); i != ec_bits.end(); i++) {
-            for (auto iterator = i->second.begin(); iterator != i->second.end(); iterator++) {
+            for (auto it = i->second.begin(); it != i->second.end(); it++) {
                 int idx_ecs = i->first;
-                int idx_target = iterator->first;
-                int bits = simple_to_one(iterator->second);
+                int idx_target = it->first;
+                int bits = simple_to_one(it->second);
 
                 out.write((char *) &idx_ecs, sizeof(idx_ecs));
                 out.write((char *) &idx_target, sizeof(idx_target));
@@ -419,7 +471,8 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
                 /*
                 std::cout << "[" << idx_ecs << "] " << ec_ids[idx_ecs];
                 std::cout << "\t"<< tc.counts[ec_ids[idx_ecs]];
-                std::cout << "\t[" << idx_target << "] " << main_targets[idx_target];
+                std::cout << "\t[" << idx_target << "] "
+                          << main_targets[idx_target];
                 std::cout << "\t[" << bits << "] ";
 
                 for (auto b : iterator->second) {
@@ -461,7 +514,8 @@ void createAlignments(Index &index, const ProgramOptions &opt, TranscriptCollect
 
                 /*
                 std::cout << "[" << idx_read << "] " << read1_ids[idx_read];
-                std::cout << "\t[" << idx_target << "] " << main_targets[idx_target];
+                std::cout << "\t[" << idx_target << "] "
+                          << main_targets[idx_target];
                 std::cout << "\t[" << bits << "] ";
 
                 for (auto b : iterator->second) {
@@ -487,7 +541,7 @@ void loadAlignments(const std::string &emase_binary_file) {
     in.open(emase_binary_file, std::ios::in | std::ios::binary);
 
     if (!in.is_open()) {
-        std::cerr << PROGNAME << " Error: index input file could not be opened!";
+        std::cerr << PROGNAME << " Error: index file could not be opened!";
         exit(1);
     }
 
@@ -508,10 +562,10 @@ void loadAlignments(const std::string &emase_binary_file) {
 
     if (binary_type == 1) {
         ec_read = true;
-        std::cout << PROGNAME << " File contains Equivalent Classes" << std::endl;
+        std::cout << PROGNAME << " File: Equivalent Classes" << std::endl;
     } else if (binary_type == 0) {
         ec_read = false;
-        std::cout << PROGNAME << " File contains Reads" << std::endl;
+        std::cout << PROGNAME << " File Reads" << std::endl;
     } else {
         std::cerr << PROGNAME << " Error: unknown file type or version";
         exit(1);
@@ -521,7 +575,8 @@ void loadAlignments(const std::string &emase_binary_file) {
     int main_target_size;
     in.read((char *) &main_target_size, sizeof(main_target_size));
 
-    std::cout << PROGNAME << " Number of Main Targets: " << main_target_size << std::endl;
+    std::cout << PROGNAME << " Number of Main Targets: "
+              << main_target_size << std::endl;
 
     // 4. read in the main targets
     memset(buffer, 0, bufsz);
@@ -569,13 +624,15 @@ void loadAlignments(const std::string &emase_binary_file) {
             in.read((char *) &idx_count, sizeof(idx_count));
             ec_classes_counts.push_back(idx_count);
         }
-        std::cout << PROGNAME << " Number of EC Classes: " << ec_classes_size << std::endl;
+        std::cout << PROGNAME << " Number of EC Classes: "
+                  << ec_classes_size << std::endl;
 
         // 7. read the ec class info
         int num_alignments;
         in.read((char *) &num_alignments, sizeof(num_alignments));
 
-        std::cout << PROGNAME << " Number of Alignment Records: " << num_alignments << std::endl;
+        std::cout << PROGNAME << " Number of Alignment Records: "
+                  << num_alignments << std::endl;
 
         for (auto ri = 0; ri < num_alignments; ++ri) {
 
@@ -632,13 +689,15 @@ void loadAlignments(const std::string &emase_binary_file) {
             in.read(buffer, tmp_size);
             reads1.push_back(std::string(buffer));
         }
-        std::cout << PROGNAME << " Number of reads: " << reads1_size << std::endl;
+        std::cout << PROGNAME << " Number of reads: "
+                  << reads1_size << std::endl;
 
         // 7. read the read_info
         int num_alignments;
         in.read((char *) &num_alignments, sizeof(num_alignments));
 
-        std::cout << PROGNAME << " Number of Alignment Records: " << num_alignments << std::endl;
+        std::cout << PROGNAME << " Number of Alignment Records: "
+                  << num_alignments << std::endl;
 
         for (auto ri = 0; ri < num_alignments; ++ri) {
             int idx_read;
@@ -697,14 +756,17 @@ int main(int argc, char *argv[]) {
         bool version_read = false;
 
         // simple argument parsing, nothing special
-        cxxopts::Options options(argv[0], " - export kallisto to new binary format");
+        cxxopts::Options options(argv[0], " - pseudo-align tp KE format");
         options.add_options()
                 ("help", "Print help")
                 ("l,load", "view the binary file", cxxopts::value<bool>(load))
-                ("reads", "create Reads version binary format, else Equivalence Class",
+                ("reads",
+                 "create Reads version binary format, else Equivalence Class",
                  cxxopts::value<bool>(version_read))
-                ("f,file", "Input Fastq File", cxxopts::value<std::vector<std::string>>(), "FASTQ FILE")
-                ("i,index", "Input Index File", cxxopts::value<std::vector<std::string>>(), "INDEX FILE")
+                ("f,file", "Input Fastq File",
+                 cxxopts::value<std::vector<std::string>>(), "FASTQ FILE")
+                ("i,index", "Input Index File",
+                 cxxopts::value<std::vector<std::string>>(), "INDEX FILE")
                 ("b,bin", "Emase Binary File", cxxopts::value<std::string>());
 
         options.parse(argc, argv);
@@ -725,10 +787,9 @@ int main(int argc, char *argv[]) {
         }
 
         if (load) {
-
-            std::cout << PROGNAME << " Loading " << binaryfile << "..." << std::endl;
+            std::cout << PROGNAME << " Loading " << binaryfile
+                      << "..." << std::endl;
             loadAlignments(binaryfile);
-
         } else {
 
             // if not loading, assume creating
@@ -752,7 +813,8 @@ int main(int argc, char *argv[]) {
 
             opt.single_end = true;
 
-            std::cout << PROGNAME << " Creating " << binaryfile << "..." << std::endl;
+            std::cout << PROGNAME << " Creating " << binaryfile
+                      << "..." << std::endl;
 
             // load the index
 
@@ -768,7 +830,8 @@ int main(int argc, char *argv[]) {
         std::cout << PROGNAME << " Done" << std::endl << std::endl;
 
     } catch (const cxxopts::OptionException &e) {
-        std::cerr << PROGNAME << " error parsing options: " << e.what() << std::endl;
+        std::cerr << PROGNAME << " error parsing options: "
+                  << e.what() << std::endl;
         exit(1);
     }
 
