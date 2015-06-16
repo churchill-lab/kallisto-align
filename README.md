@@ -2,11 +2,18 @@ kallisto-export
 ===================
 kallisto-export is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#binaryformat) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
 
+Requirements
+-------------
+
+-CMake version >= 2.8.12
+-HDF5 C library
+-zlib
+
 
 Building
 -------------
 
-To build **kallisto-export** you simply clone and compile. 
+To build **kallisto-export** you simply clone and compile.
 
 ```
 > git clone https://github.com/churchill-lab/kallisto-export.git
