@@ -54,7 +54,7 @@ Output
 
 name             | type|note
 -----------------|-------------------|---------------------
-version          |integer| 0 for reads, 1 for equivalence class
+format          |integer| 0 for reads, 1 for equivalence class
 \#targets        |integer |
 \#characters in target name|integer|repeated \#targets times
 target name|string|repeated \#targets times
@@ -62,9 +62,9 @@ target name|string|repeated \#targets times
 \#characters in haplotype name|integer|repeated \#haplotypes times
 haplotype name|string|repeated \#haplotypes times
 
->Depending upon the version, one of two formats is appended.
+>Depending upon the format value, one of two following formats is appended.
 
-**version = 0**
+**format = 0**
 
 name             | type|note
 -----------------|-------------------|---------------------
@@ -76,7 +76,7 @@ read index|integer|repeated \#pseudo-alignments times
 target index|integer|repeated \#pseudo-alignments times
 bitwise flag|integer|repeated \#pseudo-alignments times
 
-**version = 1**
+**format = 1**
 
 name             | type|note
 -----------------|-------------------|---------------------
