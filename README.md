@@ -83,9 +83,9 @@ name             | type|note
 \#equivalence classes        |integer |
 equivalence class count|integer|1 entry per \#equivalence classes
 \#pseudo-alignments|integer|
-read_index|integer|repeated \#pseudo-alignments times
-target_index|integer|repeated \#pseudo-alignments times
-bitwise_flag|integer|repeated \#pseudo-alignments times
+equivalence class index|integer|repeated \#pseudo-alignments times
+target index|integer|repeated \#pseudo-alignments times
+bitwise flag|integer|repeated \#pseudo-alignments times
 
->bitwise_flag is an integer representing the number of haplotypes that are "turned on" for a target.
+>bitwise flag is an integer representing the number of haplotypes that are "turned on" for a target.
 
