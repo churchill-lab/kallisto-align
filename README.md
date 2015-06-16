@@ -5,9 +5,9 @@ kallisto-export is a utility that makes use of [kallisto](http://pachterlab.gith
 Requirements
 -------------
 
--CMake version >= 2.8.12
--HDF5 C library
--zlib
+CMake version >= 2.8.12
+HDF5 C library
+zlib
 
 
 Building
