@@ -756,7 +756,7 @@ int main(int argc, char *argv[]) {
         bool version_read = false;
 
         // simple argument parsing, nothing special
-        cxxopts::Options options(argv[0], " - pseudo-align tp KE format");
+        cxxopts::Options options(argv[0], " - pseudo-align to kallisto-export format");
         options.add_options()
                 ("help", "Print help")
                 ("l,load", "view the binary file", cxxopts::value<bool>(load))
@@ -767,7 +767,7 @@ int main(int argc, char *argv[]) {
                  cxxopts::value<std::vector<std::string>>(), "FASTQ FILE")
                 ("i,index", "Input Index File",
                  cxxopts::value<std::vector<std::string>>(), "INDEX FILE")
-                ("b,bin", "Emase Binary File", cxxopts::value<std::string>());
+                ("b,bin", "kallisto-export output file", cxxopts::value<std::string>());
 
         options.parse(argc, argv);
 
