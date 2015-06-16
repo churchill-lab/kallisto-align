@@ -1,15 +1,13 @@
 kallisto-export
 ===================
-kallisto-export is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#binaryformat) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
+kallisto-export is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
 
 Requirements
 -------------
 
-: CMake version >= 2.8.12
-
-: HDF5 C library
-
-: zlib
+CMake version >= 2.8.12
+HDF5 C library
+zlib
 
 
 Building
@@ -55,6 +53,15 @@ kallisto-export [OPTION...] - pseudo-align to kallisto-export format
   -i, --index INDEX FILE  Input Index File
   -b, --bin arg           kallisto-export output file
 ```
+
+**kallisto-export** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase2](https://github.com/churchill-lab/emase2).
+
+```
+python emasify.py -i example.ke -a emase.example.h5
+```
+
+> Please see the [emase](https://github.com/churchill-lab/emase) page for requirements.
+
 
 Output
 --------
