@@ -1,6 +1,6 @@
-kallisto-export
+kallisto-align
 ===================
-kallisto-export is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
+kallisto-align is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
 
 Requirements
 -------------
@@ -13,24 +13,24 @@ zlib
 Building
 -------------
 
-To build **kallisto-export** you simply clone and compile.
+To build **kallisto-align** you simply clone and compile.
 
 ```
-> git clone https://github.com/churchill-lab/kallisto-export.git
-> cd kallisto-export
+> git clone https://github.com/churchill-lab/kallisto-align.git
+> cd kallisto-align
 > cmake .
 > make
 ```
 
 >**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: external/src/kallisto-build/src/kallisto
 
-You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and **kallisto-export** binaries here or move them to a more suitable location.
+You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and **kallisto-align** binaries here or move them to a more suitable location.
 
 
 Using
 -------
 
-To run **kallisto-export** you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
+To run **kallisto-align** you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
 
 A simplified example of building a [kallisto](http://pachterlab.github.io/kallisto/) index is:
 
@@ -40,10 +40,10 @@ A simplified example of building a [kallisto](http://pachterlab.github.io/kallis
 
 > Please refer to the [kallisto](http://pachterlab.github.io/kallisto/) documentation for all options.
 
-Once the index file is created, you can run **kallisto-export**.
+Once the index file is created, you can run **kallisto-align**.
 
 ```
-kallisto-export [OPTION...] - pseudo-align to kallisto-export format
+kallisto-align [OPTION...] - pseudo-align to kallisto-align format
 
       --help              Print help
   -l, --load              view the binary file
@@ -51,10 +51,10 @@ kallisto-export [OPTION...] - pseudo-align to kallisto-export format
                           Equivalence Class
   -f, --file FASTQ FILE   Input Fastq File
   -i, --index INDEX FILE  Input Index File
-  -b, --bin arg           kallisto-export output file
+  -b, --bin arg           kallisto-align output file
 ```
 
-**kallisto-export** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase2](https://github.com/churchill-lab/emase2).
+**kallisto-align** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase2](https://github.com/churchill-lab/emase2).
 
 ```
 python emasify.py -i example.ke -a emase.example.h5
@@ -66,7 +66,7 @@ python emasify.py -i example.ke -a emase.example.h5
 Output
 --------
 
-**kallisto-export** pseudo-aligns the reads and outputs the format into the following binary format.
+**kallisto-align** pseudo-aligns the reads and outputs the format into the following binary format.
 
 name             | type|note
 -----------------|-------------------|---------------------
