@@ -118,7 +118,7 @@ def emaseify(binary_file_name, emase_file_name):
         pbar.finish()
         print "Finalizing..."
         aln_mat_kallisto.finalize()
-        aln_mat_kallisto.save(emase_file_name, title='KALLISTOEXPORT')
+        aln_mat_kallisto.save(emase_file_name, title='KALLISTOALIGN')
 
         print "DONE"
     else:
@@ -168,7 +168,7 @@ def emaseify(binary_file_name, emase_file_name):
 
         print "Finalizing..."
         aln_mat_kallisto.finalize()
-        aln_mat_kallisto.save(emase_file_name, title='KALLISTOEXPORT')
+        aln_mat_kallisto.save(emase_file_name, title='KALLISTOALIGN')
 
         print "DONE"
 
@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", "--input", dest="input", metavar="KallistoExportFile")
+    parser.add_argument("-i", "--input", dest="input", metavar="KallistoAlignFile")
     parser.add_argument("-a", "--apm", dest="apm", metavar="APMFile")
 
     args = parser.parse_args()
