@@ -1,12 +1,12 @@
-from collections import OrderedDict
-import argparse
-import sys
-import numpy as np
-
-from emase import AlignmentPropertyMatrix as APM
+!#/usr/bin/env python
 import sys
 import time
+import argparse
+import numpy as np
+from collections import OrderedDict
+from emase import AlignmentPropertyMatrix as APM
 from progressbar import ETA, Percentage, ProgressBar, Bar
+
 
 def simple_from_one(c, size):
     ret = [0]*size
@@ -16,7 +16,7 @@ def simple_from_one(c, size):
     return ret
 
 
-def emaseify(binary_file_name, emase_file_name):
+def emasify(binary_file_name, emase_file_name):
     """
 
     :param binary_file_name:
@@ -189,5 +189,5 @@ if __name__ == '__main__':
         print "No APM file specified"
         sys.exit()
 
-    emaseify(args.input, args.apm)
+    emasify(args.input, args.apm)
 
