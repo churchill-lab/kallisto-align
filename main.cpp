@@ -126,6 +126,23 @@ void createAlignments(Index &index,
 
     int idx = 0;
     int main_idx = 0;
+
+
+    // added for KB so he could get a pretty sort order instead of the kallisto default
+    for (auto name : index.target_names_) {
+        std::vector<std::string> elems = split(name, delim);
+
+        if (set_haps.insert(elems[1]).second) {
+            haps.push_back(elems[1]);
+        }
+    }
+
+    std::sort(haps.begin(), haps.end());
+    for (int i = 0; i < haps.size(); i++) {
+        map_haps[haps[i]] = i;
+        //std::cout << i << ", " << haps[i] << std::endl;
+    }
+
     for (auto name : index.target_names_) {
         std::vector<std::string> elems = split(name, delim);
 
@@ -134,20 +151,15 @@ void createAlignments(Index &index,
             map_targetname_to_main[elems[0]] = main_targets.size() - 1;
         }
 
-        if (set_haps.insert(elems[1]).second) {
-            haps.push_back(elems[1]);
-            map_haps[elems[1]] = haps.size() - 1;
-        }
-
         main_idx = map_targetname_to_main[elems[0]];
         map_targetidx_to_mainidx[idx] = main_idx;
+
         map_mainidx_to_all_targets[main_idx][map_haps[elems[1]]] = idx;
 
         idx++;
     }
 
     /*
-
     for (auto s : main_targets) {
         int i = map_targetname_to_main[s];
         std::cout << "TARGET NAME:" << s << ", main index " << i << std::endl;
@@ -157,7 +169,8 @@ void createAlignments(Index &index,
             std::cout << a << ", "<< haps[a] << ", " << c[a] << std::endl;
         }
     }
-     */
+    */
+
 
     gzFile fp1 = 0, fp2 = 0;
     kseq_t *seq1 = 0, *seq2 = 0;
@@ -609,6 +622,7 @@ void loadAlignments(const std::string &emase_binary_file) {
         }
         memset(buffer, 0, bufsz);
         in.read(buffer, tmp_size);
+        std::cout << PROGNAME << " Haplotypes: " << buffer << std::endl;
         haplotypes.push_back(std::string(buffer));
     }
 
