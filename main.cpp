@@ -138,26 +138,22 @@ void createAlignments(Index &index,
     }
 
     std::sort(haps.begin(), haps.end());
-    for (int i = 0; i < haps.size(); i++) {
-        map_haps[haps[i]] = i;
-        //std::cout << i << ", " << haps[i] << std::endl;
-    }
 
     for (auto name : index.target_names_) {
-        std::vector<std::string> elems = split(name, delim);
+        std::vector<std::string> elems2 = split(name, delim);
 
-        if (set_targets.insert(elems[0]).second) {
-            main_targets.push_back(elems[0]);
-            map_targetname_to_main[elems[0]] = main_targets.size() - 1;
+        if (set_targets.insert(elems2[0]).second) {
+            main_targets.push_back(elems2[0]);
+            map_targetname_to_main[elems2[0]] = main_targets.size() - 1;
         }
 
-        main_idx = map_targetname_to_main[elems[0]];
+        main_idx = map_targetname_to_main[elems2[0]];
         map_targetidx_to_mainidx[idx] = main_idx;
 
-        map_mainidx_to_all_targets[main_idx][map_haps[elems[1]]] = idx;
-
+        map_mainidx_to_all_targets[main_idx][map_haps[elems2[1]]] = idx;
         idx++;
     }
+
 
     /*
     for (auto s : main_targets) {
@@ -165,11 +161,24 @@ void createAlignments(Index &index,
         std::cout << "TARGET NAME:" << s << ", main index " << i << std::endl;
         std::map<int, int> c = map_mainidx_to_all_targets[i];
 
+        std::map<int, int>::iterator it;
+
+        std::cout << "c = " << std::endl;
+        for ( it = c.begin(); it != c.end(); it++ )
+        {
+            std::cout << it->first  // string (key)
+            << ':'
+            << it->second   // string's value
+            << std::endl ;
+        }
+
         for (int a = 0; a < haps.size(); a++) {
+            //if (m.count(key))
+            std::cout << "index.target_names_[c[a]] = " << index.target_names_[c[a]] << std::endl;
             std::cout << a << ", "<< haps[a] << ", " << c[a] << std::endl;
         }
     }
-    */
+     */
 
 
     gzFile fp1 = 0, fp2 = 0;
@@ -322,14 +331,16 @@ void createAlignments(Index &index,
                     }
                 }
 
+                //std::cout <<"Looping through vector!"<< std::endl;
+
                 for (int a : vec) {
+
                     // get the main target
                     int maintarget_idx = map_targetidx_to_mainidx[a];
 
                     //std::cout << "MAIN TARGET=" << maintarget_idx << ", "
                     //          << main_targets[maintarget_idx] << std::endl;
 
-                    auto &loc = map_mainidx_to_all_targets[maintarget_idx];
 
                     if (_mapper.count(maintarget_idx) <= 0) {
                         // maintarget_idx not in mapper
@@ -338,15 +349,13 @@ void createAlignments(Index &index,
                         }
                     }
 
-                    // loop through the haplotypes
-                    for (int h = 0; h < haps_size; h++) {
-                        //std::cout << "COMPARING " << a << " to " << loc[h]
-                        //          << std::endl;
+                    std::map<int, int> loc = map_mainidx_to_all_targets[maintarget_idx];
+                    std::map<int, int>::iterator it;
 
-                        if (a == loc[h]) {
-                            _mapper[maintarget_idx][h] = 1;
-                            break;
-                        }
+                    for ( it = loc.begin(); it != loc.end(); it++ ) {
+                        // it->first = haplotype index
+                        // it->second = target_id
+                        _mapper[maintarget_idx][it->first] = 1;
                     }
                 }
 
@@ -482,13 +491,14 @@ void createAlignments(Index &index,
                 out.write((char *) &bits, sizeof(bits));
 
                 /*
+
                 std::cout << "[" << idx_ecs << "] " << ec_ids[idx_ecs];
                 std::cout << "\t"<< tc.counts[ec_ids[idx_ecs]];
                 std::cout << "\t[" << idx_target << "] "
                           << main_targets[idx_target];
                 std::cout << "\t[" << bits << "] ";
 
-                for (auto b : iterator->second) {
+                for (auto b : it->second) {
                     std::cout << b;
                 }
 
@@ -668,6 +678,8 @@ void loadAlignments(const std::string &emase_binary_file) {
             _yn[idx_target] = all_bits;
             reads1_bits[idx_ec] = _yn;
         }
+
+        std::cout << "READ\tCOUNTS\tTARGET\tBITS" << std::endl;
 
         for (auto i = reads1_bits.begin(); i != reads1_bits.end(); i++) {
             for (auto j = i->second.begin(); j != i->second.end(); j++) {
