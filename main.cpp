@@ -139,6 +139,10 @@ void createAlignments(Index &index,
 
     std::sort(haps.begin(), haps.end());
 
+    for (int i = 0; i < haps.size(); i++) {
+        map_haps[haps[i]] = i;
+    }
+
     for (auto name : index.target_names_) {
         std::vector<std::string> elems2 = split(name, delim);
 
@@ -394,24 +398,6 @@ void createAlignments(Index &index,
         kseq_destroy(seq2);
     }
 
-    std::cout << PROGNAME << "  Total Targets: "
-              << idx << std::endl;
-
-    std::cout << PROGNAME << "   Main Targets: "
-              << main_targets.size() << std::endl;
-
-    std::cout << PROGNAME << "     Haplotypes: "
-              << haps.size() << std::endl;
-
-    std::cout << PROGNAME << "          Reads: "
-              << numreads << std::endl;
-
-    std::cout << PROGNAME << "   Mapped Reads: "
-              << nummapped << std::endl;
-
-    std::cout << PROGNAME << "     Alignments: "
-              << num_alignment_rows << std::endl;
-
     std::ofstream out;
     out.open(emase_binary_file, std::ios::out | std::ios::binary);
 
@@ -421,6 +407,7 @@ void createAlignments(Index &index,
     }
 
     int tmp_size = 0;
+    int total_count_align = 0;
 
     // 1. version
     out.write((char *) &version, sizeof(version));
@@ -479,7 +466,6 @@ void createAlignments(Index &index,
         out.write((char *) &_num_mappings, sizeof(_num_mappings));
 
         //std::cout << _num_mappings << std::endl;
-
         for (auto i = ec_bits.begin(); i != ec_bits.end(); i++) {
             for (auto it = i->second.begin(); it != i->second.end(); it++) {
                 int idx_ecs = i->first;
@@ -489,6 +475,10 @@ void createAlignments(Index &index,
                 out.write((char *) &idx_ecs, sizeof(idx_ecs));
                 out.write((char *) &idx_target, sizeof(idx_target));
                 out.write((char *) &bits, sizeof(bits));
+
+                for (auto b : it->second) {
+                    total_count_align += (b * tc.counts[ec_ids[idx_ecs]]);
+                }
 
                 /*
 
@@ -535,6 +525,8 @@ void createAlignments(Index &index,
                 out.write((char *) &idx_target, sizeof(idx_target));
                 out.write((char *) &bits, sizeof(bits));
 
+
+
                 /*
                 std::cout << "[" << idx_read << "] " << read1_ids[idx_read];
                 std::cout << "\t[" << idx_target << "] "
@@ -550,6 +542,15 @@ void createAlignments(Index &index,
             }
         }
     }
+
+    std::cout << PROGNAME << " Total Targets: " << idx << std::endl;
+    std::cout << PROGNAME << " Main Targets: " << main_targets.size() << std::endl;
+    std::cout << PROGNAME << " Haplotypes: " << haps.size() << std::endl;
+    std::cout << PROGNAME << " Equivalence Classes (from raw reads): " << ec_ids.size() << std::endl;
+    std::cout << PROGNAME << " Reads: " << numreads << std::endl;
+    std::cout << PROGNAME << " Mapped Reads: " << nummapped << std::endl;
+    std::cout << PROGNAME << " Alignments: " << total_count_align << std::endl;
+
 
     out.flush();
     out.close();
@@ -819,7 +820,7 @@ int main(int argc, char *argv[]) {
         } else {
 
             // if not loading, assume creating
-
+            //freopen("/dev/null", "w", stderr);
             ProgramOptions opt;
             if (options.count("f")) {
                 opt.files = options["f"].as<std::vector<std::string>>();
