@@ -1,5 +1,3 @@
-kallisto-align
-===================
 kallisto-align is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
 
 Requirements
