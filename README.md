@@ -1,4 +1,4 @@
-kallisto-align is a utility that exports pseudo-alignments by [kallisto](http://pachterlab.github.io/kallisto/) in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero).
+kallisto-align is a utility that runs [kallisto](http://pachterlab.github.io/kallisto/) and exports pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 Requirements
 ------------
