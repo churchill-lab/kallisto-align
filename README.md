@@ -4,7 +4,9 @@ Requirements
 ------------
 
 CMake version >= 2.8.12
+
 HDF5 C library
+
 zlib
 
 
