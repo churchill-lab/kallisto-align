@@ -1,15 +1,15 @@
-kallisto-align is a utility that makes use of [kallisto](http://pachterlab.github.io/kallisto/), but outputs the pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase).
+kallisto-align is a utility that exports pseudo-alignments by [kallisto](http://pachterlab.github.io/kallisto/) in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 Requirements
--------------
+------------
 
 CMake version >= 2.8.12
 HDF5 C library
 zlib
 
 
-Building
--------------
+Installation
+------------
 
 To build **kallisto-align** you simply clone and compile.
 
@@ -25,8 +25,8 @@ To build **kallisto-align** you simply clone and compile.
 You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and **kallisto-align** binaries here or move them to a more suitable location.
 
 
-Using
--------
+Usage
+-----
 
 To run **kallisto-align** you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
 
@@ -52,7 +52,7 @@ kallisto-align [OPTION...] - pseudo-align to kallisto-align format
   -b, --bin arg           kallisto-align output file
 ```
 
-**kallisto-align** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase2](https://github.com/churchill-lab/emase2).
+**kallisto-align** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 ```
 python emasify.py -i example.ke -a emase.example.h5
