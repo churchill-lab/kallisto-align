@@ -58,8 +58,6 @@ The binary file can be converted into [emase](https://github.com/churchill-lab/e
 python emasify.py -i my_sample.bin -a my_sample.h5
 ```
 
-> Please see the [emase](https://github.com/churchill-lab/emase) page for requirements.
-
 
 Output
 ------
