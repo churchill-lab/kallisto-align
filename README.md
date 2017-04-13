@@ -33,7 +33,7 @@ To run ```kallisto-align``` you need a [kallisto](http://pachterlab.github.io/ka
 A simplified example of building a [kallisto](http://pachterlab.github.io/kallisto/) index is:
 
 ```
-> kallisto index -i example.idx exampla.fa
+> kallisto index -i transcriptome.idx transcriptome.fa
 ```
 
 > Please refer to the [kallisto](http://pachterlab.github.io/kallisto/) documentation for all other options.
@@ -52,7 +52,7 @@ kallisto-align [OPTION...] - pseudo-align to kallisto-align format
   -b, --bin arg           kallisto-align output file
 ```
 
-The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or [alntools ec2emase](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
+The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or [alntools](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 ```
 python emasify.py -i example.ke -a emase.example.h5
