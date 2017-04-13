@@ -1,19 +1,17 @@
-kallisto-align is a utility that runs [kallisto](http://pachterlab.github.io/kallisto/) and exports pseudo-alignments in a different [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero).
+**kallisto-align** runs [kallisto](http://pachterlab.github.io/kallisto/), processes its internal data object storing the pseudo-alignments or equivalent classes into a sparse alignment incidence matrix, and exports the matrix in a pre-defined [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero). This utility is a component of our bigger plan to provide a way to compare, contrast, or combine the results of different alignment strategies as envisioned in our [alntools](https://churchill-lab.github.io/alntools).
 
 Requirements
 ------------
 
 CMake version >= 2.8.12
-
 HDF5 C library
-
 zlib
 
 
 Installation
 ------------
 
-To build **kallisto-align** you simply clone and compile.
+To build ```kallisto-align``` you simply clone and compile.
 
 ```
 > git clone https://github.com/churchill-lab/kallisto-align.git
@@ -24,13 +22,13 @@ To build **kallisto-align** you simply clone and compile.
 
 >**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: external/src/kallisto-build/src/kallisto
 
-You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and **kallisto-align** binaries here or move them to a more suitable location.
+You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and ```kallisto-align``` binaries here or move them to a more suitable location.
 
 
 Usage
 -----
 
-To run **kallisto-align** you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
+To run ```kallisto-align``` you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
 
 A simplified example of building a [kallisto](http://pachterlab.github.io/kallisto/) index is:
 
@@ -38,9 +36,9 @@ A simplified example of building a [kallisto](http://pachterlab.github.io/kallis
 > kallisto index -i example.idx exampla.fa
 ```
 
-> Please refer to the [kallisto](http://pachterlab.github.io/kallisto/) documentation for all options.
+> Please refer to the [kallisto](http://pachterlab.github.io/kallisto/) documentation for all other options.
 
-Once the index file is created, you can run **kallisto-align**.
+Once the index file is created, you can run ```kallisto-align```.
 
 ```
 kallisto-align [OPTION...] - pseudo-align to kallisto-align format
@@ -54,7 +52,7 @@ kallisto-align [OPTION...] - pseudo-align to kallisto-align format
   -b, --bin arg           kallisto-align output file
 ```
 
-**kallisto-align** binary format can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
+The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or [alntools ec2emase](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 ```
 python emasify.py -i example.ke -a emase.example.h5
