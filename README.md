@@ -22,7 +22,7 @@ To build ```kallisto-align``` you simply clone and compile.
 
 >**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: ```external/src/kallisto-build/src/kallisto```.
 
-You can now either keep the ```kallisto``` and ```kallisto-align``` binaries as is or move them to a more suitable location, e.g. ```/usr/local/bin```.
+You can now either keep the ```kallisto``` and ```kallisto-align``` binaries where they are or move them to a more suitable location, e.g. ```/usr/local/bin```.
 
 
 Usage
