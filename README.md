@@ -78,6 +78,7 @@ haplotype name|string|repeated \#haplotypes times
 
 >Depending upon the format value, one of two following formats is appended.
 
+
 ***Content part:*** for format=0
 
 name             | type|note
