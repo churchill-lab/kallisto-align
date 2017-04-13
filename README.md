@@ -64,6 +64,9 @@ python emasify.py -i example.ke -a emase.example.h5
 Output
 --------
 
+Header part
+~~~~~~~~~~~
+
 **kallisto-align** pseudo-aligns the reads and outputs the format into the following binary format.
 
 name             | type|note
