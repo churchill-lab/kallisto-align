@@ -55,7 +55,7 @@ kallisto-align [OPTION...] - pseudo-align to kallisto-align format
 The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or [alntools](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 ```
-python emasify.py -i example.ke -a emase.example.h5
+python emasify.py -i my_sample.bin -a my_sample.h5
 ```
 
 > Please see the [emase](https://github.com/churchill-lab/emase) page for requirements.
