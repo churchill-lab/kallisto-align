@@ -20,9 +20,9 @@ To build ```kallisto-align``` you simply clone and compile.
 > make
 ```
 
->**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: external/src/kallisto-build/src/kallisto
+>**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: ```external/src/kallisto-build/src/kallisto```.
 
-You can now either keep the [kallisto](http://pachterlab.github.io/kallisto/) and ```kallisto-align``` binaries here or move them to a more suitable location.
+You can now either keep the ```kallisto``` and ```kallisto-align``` binaries as is or move them to a more suitable location, e.g. ```/usr/local/bin```.
 
 
 Usage
@@ -62,12 +62,9 @@ python emasify.py -i example.ke -a emase.example.h5
 
 
 Output
---------
+------
 
-Header part
-~~~~~~~~~~~
-
-**kallisto-align** pseudo-aligns the reads and outputs the format into the following binary format.
+***Header part***
 
 name             | type|note
 -----------------|-------------------|---------------------
@@ -81,7 +78,7 @@ haplotype name|string|repeated \#haplotypes times
 
 >Depending upon the format value, one of two following formats is appended.
 
-**format = 0**
+***Content part:*** for format=0
 
 name             | type|note
 -----------------|-------------------|---------------------
@@ -93,7 +90,7 @@ read index|integer|repeated \#pseudo-alignments times
 target index|integer|repeated \#pseudo-alignments times
 bitwise flag|integer|repeated \#pseudo-alignments times
 
-**format = 1**
+***Content part:*** for format=1
 
 name             | type|note
 -----------------|-------------------|---------------------
