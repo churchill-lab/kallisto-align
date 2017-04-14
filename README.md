@@ -1,11 +1,11 @@
-**kallisto-align** runs [kallisto](http://pachterlab.github.io/kallisto/), processes its internal data object storing the pseudo-alignments into an alignment incidence matrix, and exports the matrix in a pre-defined [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero). It is a companion utility for our bigger project that aims to provide a way to compare, contrast, or combine the results of different alignment strategies as envisioned in our [alntools](https://churchill-lab.github.io/alntools).
+**kallisto-align** runs [kallisto](http://pachterlab.github.io/kallisto/), processes its internal data object into an alignment incidence matrix, and exports the matrix in a pre-defined [binary format](#output) for use with other tools such as [emase](https://github.com/churchill-lab/emase) or [emase-zero](https://churchill-lab.github.io/emase-zero). It is a companion utility for our bigger project that aims to provide a suite of tools to compare, contrast, or combine the results of different alignment strategies as envisioned in our [alntools](https://churchill-lab.github.io/alntools).
 
 Requirements
 ------------
 
-CMake version >= 2.8.12<br />
-HDF5 C library<br />
-zlib
+[CMake version >= 2.8.12](https://cmake.org/download/)<br />
+[HDF5 C library](https://support.hdfgroup.org/HDF5/release/obtainsrc.html)<br />
+[zlib](http://zlib.net)
 
 
 Installation
