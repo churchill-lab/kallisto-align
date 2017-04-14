@@ -62,5 +62,5 @@ python emasify.py -i my_sample.bin -a my_sample.h5
 Output
 ------
 
-![][assets/images/emase_binary_format.jpg "EMASE binary format"]
+![][https://github.com/churchill-lab/kallisto-align/blob/gh-pages/assets/images/emase_binary_format.jpg "EMASE binary format"]
 
