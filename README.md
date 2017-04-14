@@ -62,43 +62,5 @@ python emasify.py -i my_sample.bin -a my_sample.h5
 Output
 ------
 
-***Header part***
-
-name             | type|note
------------------|-------------------|---------------------
-format          |integer| 0 for reads, 1 for equivalence class
-\#targets        |integer |
-\#characters in target name|integer|repeated \#targets times
-target name|string|repeated \#targets times
-\#haplotypes|integer|
-\#characters in haplotype name|integer|repeated \#haplotypes times
-haplotype name|string|repeated \#haplotypes times
-
->Depending upon the format value, one of two following formats is appended.
-
-
-***Content part:*** for format=0
-
-name             | type|note
------------------|-------------------|---------------------
-\#reads        |integer |
-\#characters in read name|integer|repeated \#reads times
-read name|string|repeated \#reads times
-\#pseudo-alignments|integer|
-read index|integer|repeated \#pseudo-alignments times
-target index|integer|repeated \#pseudo-alignments times
-bitwise flag|integer|repeated \#pseudo-alignments times
-
-***Content part:*** for format=1
-
-name             | type|note
------------------|-------------------|---------------------
-\#equivalence classes        |integer |
-equivalence class count|integer|1 entry per \#equivalence classes
-\#pseudo-alignments|integer|
-equivalence class index|integer|repeated \#pseudo-alignments times
-target index|integer|repeated \#pseudo-alignments times
-bitwise flag|integer|repeated \#pseudo-alignments times
-
->bitwise flag is an integer representing the number of haplotypes that are "turned on" for a target.
+![][https://github.com/churchill-lab/kallisto-align/assets/images/binary_format.jpg "EMASE binary format"]
 
