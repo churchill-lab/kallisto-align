@@ -59,7 +59,7 @@ For example,
 $ kallisto-align -f my_sample.fastq -i transcriptome.idx -b my_sample.bin
 ```
 
-The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with [alntools](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
+The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with [alntools](https://churchill-lab.github.io/alntools/#ec2emase). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 
 Output
