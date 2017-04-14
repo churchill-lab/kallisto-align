@@ -14,10 +14,10 @@ Installation
 To build ```kallisto-align``` you simply clone and compile.
 
 ```
-> git clone https://github.com/churchill-lab/kallisto-align.git
-> cd kallisto-align
-> cmake .
-> make
+$ git clone https://github.com/churchill-lab/kallisto-align.git
+$ cd kallisto-align
+$ cmake .
+$ make
 ```
 
 >**Note:** [kallisto](http://pachterlab.github.io/kallisto/) will be downloaded and compiled for you and be located at: ```external/src/kallisto-build/src/kallisto```.
@@ -28,35 +28,36 @@ You can now either keep the ```kallisto``` and ```kallisto-align``` binaries whe
 Usage
 -----
 
-To run ```kallisto-align``` you need a [kallisto](http://pachterlab.github.io/kallisto/) index file and a FASTQ file.
-
-A simplified example of building a [kallisto](http://pachterlab.github.io/kallisto/) index is:
+We first need to build a [kallisto](http://pachterlab.github.io/kallisto/) index file. For example, given our target sequences are in a fasta file ```transcriptome.fa```:
 
 ```
-> kallisto index -i transcriptome.idx transcriptome.fa
+$ kallisto index -i transcriptome.idx transcriptome.fa
 ```
 
-> Please refer to the [kallisto](http://pachterlab.github.io/kallisto/) documentation for all other options.
+> Please refer to the [kallisto manual](https://pachterlab.github.io/kallisto/manual) for more options.
 
-Once the index file is created, you can run ```kallisto-align```.
-
-```
-kallisto-align [OPTION...] - pseudo-align to kallisto-align format
-
-      --help              Print help
-  -l, --load              view the binary file
-      --reads             create Reads version binary format, else
-                          Equivalence Class
-  -f, --file FASTQ FILE   Input Fastq File
-  -i, --index INDEX FILE  Input Index File
-  -b, --bin arg           kallisto-align output file
-```
-
-The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with the **emasify.py** script or [alntools](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
+Once the index file is created, you can run ```kallisto-align```:
 
 ```
-python emasify.py -i my_sample.bin -a my_sample.h5
+kallisto-align [OPTIONS...]
+
+Options:
+
+  -f, --file READ FILE    Input read file name
+  -i, --index INDEX FILE  Input index file name
+  -b, --bin OUTPUT FILE   Output file name
+  --reads                 Toggle read-level binary format (Format=0), else Equivalence Classes
+  -l, --load              View the binary file
+  --help                  Print this message and exit
 ```
+
+For example,
+
+```
+$ kallisto-align -f my_sample.fastq -i transcriptome.idx -b my_sample.bin
+```
+
+The binary file can be converted into [emase](https://github.com/churchill-lab/emase) format with [alntools](https://churchill-lab.github.io/alntools). It can also be used directly with [emase-zero](https://churchill-lab.github.io/emase-zero).
 
 
 Output
