@@ -6,7 +6,7 @@ Requirements
 ------------
 
 [CMake version >= 2.8.12](https://cmake.org/download/)<br />
-[HDF5 C library](https://support.hdfgroup.org/HDF5/release/obtainsrc.html)<br />
+[HDF5 C library](https://www.hdfgroup.org/downloads/hdf5/)<br />
 [zlib](http://zlib.net)
 
 
